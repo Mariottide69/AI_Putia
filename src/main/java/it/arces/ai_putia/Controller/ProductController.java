@@ -28,9 +28,14 @@ public class ProductController {
             .orElse(ResponseEntity.notFound().build());
    }
 
-   @PostMapping
+   @PostMapping("/add")
    public ResponseEntity<ProductDTO> createProduct(@RequestBody ProductDTO productDTO) {
-      return ResponseEntity.status(HttpStatus.CREATED).body(productService.saveProduct(productDTO));
+      try {
+         ProductDTO createdProduct = productService.saveProduct(productDTO);
+         return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
+      } catch (RuntimeException e) {
+         return ResponseEntity.badRequest().body(null);
+      }
    }
 
    @PutMapping("/{id}")

@@ -35,15 +35,29 @@ public class ProductServiceImpl implements ProductService {
    }
 
    @Override
-   public ProductDTO saveProduct(ProductDTO productDTO) {
-      Product product = convertToEntity(productDTO);
-      product = productRepository.save(product);
-      return convertToDTO(product);
+   public void deleteProduct(Long id) {
+      productRepository.deleteById(id);
    }
 
    @Override
-   public void deleteProduct(Long id) {
-      productRepository.deleteById(id);
+   public ProductDTO saveProduct(ProductDTO productDTO) {
+      // Verifico se la categoria esiste
+      Category category = categoryRepository.findById(productDTO.getCategoryId())
+            .orElseThrow(() -> new RuntimeException("Category not found with id: " + productDTO.getCategoryId()));
+
+      // Uso il metodo convertToEntity esistente, ma assicurati che imposti lacategoria
+      Product product = convertToEntity(productDTO);
+      product.setCategory(category);
+
+      if (product.getId() == null) {
+         product.setDeleted(false);
+      }
+
+      // Salva il prodotto
+      Product savedProduct = productRepository.save(product);
+
+      // Converti l'entità salvata in DTO e restituiscila
+      return convertToDTO(savedProduct);
    }
 
    private ProductDTO convertToDTO(Product product) {
