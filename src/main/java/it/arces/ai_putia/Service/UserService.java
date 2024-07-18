@@ -50,6 +50,7 @@ public class UserService implements IUserService {
       newUser.setUserName(request.userName());
       newUser.setEmail(request.email());
       newUser.setPassword(passwordEncoder.encode(request.password()));
+      newUser.setPhonenumber(request.phonenumber());
       newUser.setRole(request.role());
       return userRepository.save(newUser);
    }

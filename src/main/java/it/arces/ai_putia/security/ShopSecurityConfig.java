@@ -24,14 +24,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 @EnableWebSecurity
 public class ShopSecurityConfig {
 
-   private static final String[] SECURED_URLs = { 
+   // private static final String[] SECURED_URLs = { 
 
-        };
+   //      };
 
    private static final String[] UN_SECURED_URLs = {
          "/users/**",
          "/authenticate/**",
-         "/register/**"
+         "/register/**",
+         "/login.html",
+         "/products.html"
    };
 
    @Autowired
@@ -59,15 +61,26 @@ public class ShopSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.csrf().disable()
                 .authorizeHttpRequests()
-                .requestMatchers(UN_SECURED_URLs).permitAll().and()
-                .authorizeHttpRequests().requestMatchers(SECURED_URLs)
-                .hasAuthority("ADMIN").anyRequest().authenticated()
-                .and().sessionManagement()
+                .requestMatchers(UN_SECURED_URLs).permitAll()
+                .anyRequest().authenticated()
+                .and()
+                .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
+      //   .csrf().disable()
+      //           .authorizeHttpRequests()
+      //           .requestMatchers(UN_SECURED_URLs).permitAll().and()
+      //           .authorizeHttpRequests().requestMatchers(SECURED_URLs)
+      //           .hasAuthority("ADMIN").anyRequest().authenticated()
+      //           .and().sessionManagement()
+      //           .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+      //           .and()
+      //           .authenticationProvider(authenticationProvider())
+      //           .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
+      //           .build();
     }
 
 
