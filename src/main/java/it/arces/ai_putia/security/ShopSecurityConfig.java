@@ -33,7 +33,8 @@ public class ShopSecurityConfig {
          "/authenticate/**",
          "/register/**",
          "/login.html",
-         "/products.html"
+         "/products.html",
+         "/api/auth/logout"
    };
 
    @Autowired

@@ -16,6 +16,7 @@ import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 @Service
@@ -28,6 +29,8 @@ public class JWTService {
 
    @Value("${spring.jwt.jwtExpirationInMs}")
    private int JWT_EXPIRATION_TIME_IN_MILLISECONDS;
+
+   private final Map<String, Date> invalidatedTokens = new ConcurrentHashMap<>();
 
    public String generateToken(String userName) {
       Map<String, Object> claims = new HashMap<>();
@@ -43,22 +46,29 @@ public class JWTService {
             .signWith(getSignedKey(), SignatureAlgorithm.HS256).compact();
    }
 
+   public void invalidateToken(String token) {
+      Claims claims = extractAllClaims(token);
+      Date expirationDate = claims.getExpiration();
+      invalidatedTokens.put(token, expirationDate);
+   }
+
+
    private Key getSignedKey() {
       byte[] keyByte = Decoders.BASE64.decode(JWT_SECRET);
       return Keys.hmacShaKeyFor(keyByte);
    }
 
-   public String extractUsernameFromToken(String theToken) {
-      return extractClaim(theToken, Claims::getSubject);
+   public String extractUsernameFromToken(String token) {
+      return extractClaim(token, Claims::getSubject);
    }
 
-   public Date extractExpirationTimeFromToken(String theToken) {
-      return extractClaim(theToken, Claims::getExpiration);
+   public Date extractExpirationTimeFromToken(String token) {
+      return extractClaim(token, Claims::getExpiration);
    }
 
-   public Boolean validateToken(String theToken, UserDetails userDetails) {
-      final String userName = extractUsernameFromToken(theToken);
-      return (userName.equals(userDetails.getUsername()) && !isTokenExpired(theToken));
+   public Boolean validateToken(String token, UserDetails userDetails) {
+      final String userName = extractUsernameFromToken(token);
+      return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token) && !isTokenInvalidated(token));
    }
 
    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -75,8 +85,18 @@ public class JWTService {
 
    }
 
-   private boolean isTokenExpired(String theToken) {
-      return extractExpirationTimeFromToken(theToken).before(new Date());
+   private boolean isTokenInvalidated(String token) {
+      return invalidatedTokens.containsKey(token) && !isTokenExpired(token);
+   }
+
+   private boolean isTokenExpired(String token) {
+      Date expiration = extractExpirationTimeFromToken(token);
+      return expiration.before(new Date());
+   }
+
+   public void cleanupInvalidatedTokens() {
+      Date now = new Date();
+      invalidatedTokens.entrySet().removeIf(entry -> entry.getValue().before(now));
    }
 
 }

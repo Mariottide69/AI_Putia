@@ -27,6 +27,7 @@
 
 <body>
    <h1>Lista Prodotti</h1>
+   <button id="logoutBtn">Logout</button>
    <table id="productTable">
       <thead>
          <tr>
@@ -35,17 +36,41 @@
             <th>Prezzo</th>
             <th>Descrizione</th>
          </tr>
-      </thead>
+      </thead>       
       <tbody></tbody>
    </table>
 
    <script>
       $(document).ready(function () {
-         var token = localStorage.getItem('jwt_token');
+         let token = localStorage.getItem('jwt_token');
          if (!token) {
             window.location.href = '/login.html';
             return;
          }
+
+         $('#logoutBtn').click(function () {
+            // Remove token from localStorage
+            localStorage.removeItem('jwt_token');
+
+            // Optional: Make a logout request to the server
+            $.ajax({
+               url: '/api/auth/logout',
+               type: 'POST',
+               headers: {
+                  'Authorization': 'Bearer ' + localStorage.getItem('jwt_token')
+               },
+               success: function () {
+                  console.log('Logout successful');
+               },
+               error: function (xhr, status, error) {
+                  console.error('Logout error:', error);
+               },
+               complete: function () {
+                  // Redirect to login page
+                  window.location.href = '/login.html';
+               }
+            });
+         });
 
          $.ajax({
             url: '/api/products',
@@ -55,11 +80,11 @@
                'Authorization': 'Bearer ' + token
             },
             success: function (data) {
-               var tbody = $('#productTable tbody');
+               let tbody = $('#productTable tbody');
                $.each(data, function (i, product) {
-                  var row = $('<tr>').append(
+                  let row = $('<tr>').append(
                      $('<td>').text(product.id),
-                     $('<td>').text(product.name),
+                     $('<td>').text(product.pname),
                      $('<td>').text(product.price),
                      $('<td>').text(product.description)
                   );
